@@ -14,45 +14,52 @@ class Member:
         self.name = name
         self.borrowed_books = []
 
-    def checkout(self, book):
-        if book.is_available:
-            book.is_available = False
-            self.borrowed_books.append(book)
-        else:
-            print(f"The book '{book.title}' is not available for checkout.")
-
-    def return_book(self, book):
-        if book in self.borrowed_books:
-            book.is_available = True
-            self.borrowed_books.remove(book)
-        else:
-            print(f"The book '{book.title}' was not borrowed by {self.name}.")
-
 
 class Library:
     def __init__(self):
         self.books = []
         self.members = []
 
-    def add_book(self, book):
-        self.books.append(book)
+    # add a new book to the library
+    def add_book(self, title, author):
+        new_book = Book(title, author)
+        self.books.append(new_book)
 
-    def add_member(self, member):
-        self.members.append(member)
+    # add a new member to the library
+    def register_member(self, name):
+        new_member = Member(name)
+        self.members.append(new_member)
 
-    def checkout_book(self, member, title):
+    # borrow a book from the library
+    def borrow_book(self, member, title):
         for book in self.books:
-            if book.title == title:
-                member.checkout(book)
-                return
-        print(f"The book '{title}' is not found in the library.")
+            if book.title == title and book.is_available:
+                book.is_available = False
+                member.borrowed_books.append(book)
+                return True
+        print(f"Book '{title}' is not available for borrowing.")
+        return False
 
+    # a member returns a book to the library
     def return_book(self, member, title):
+        for book in member.borrowed_books:
+            if book.title == title:
+                book.is_available = True
+                member.borrowed_books.remove(book)
+                return True
+        print(f"Book '{title}' was not borrowed by {member.name}.")
+        return False
+
+    # check if a book is available in the library
+    def search_book(self, title):
         for book in self.books:
             if book.title == title:
-                member.return_book(book)
+                if book.is_available:
+                    print(f"Book '{title}' is available in the library.")
+                else:
+                    print(f"Book '{title}' is not available in the library.")
                 return
-        print(f"The book '{title}' is not owned in our library.")
+        print(f"Book '{title}' is not found in the library.")
 
 
 # ==========================================
@@ -90,20 +97,19 @@ member_names = ["Alice", "Bob", "Charlie", "Diana", "Ethan"]
 # objects from the blueprints + data above)
 # ==========================================
 
-library = Library()
+library = Library()  # creates a Library object, which will hold all the books and members
 
-# create a Book object for each (title, author) pair, add it to the library
+# add_book takes (title, author) directly and builds the Book internally,
+# so we just pass the raw values through — no need to build Book ourselves
 for title, author in book_data:
-    new_book = Book(title, author)
-    library.add_book(new_book)
+    library.add_book(title, author)
 
-# create a Member object for each name, add it to the library,
-# and keep a reference in a dict so we can look members up by name later
+# register_member takes a name directly and builds the Member internally,
+# and we keep a reference in a dict so we can look members up by name later
 members = {}
 for name in member_names:
-    new_member = Member(name)
-    library.add_member(new_member)
-    members[name] = new_member
+    library.register_member(name)
+    members[name] = library.members[-1]  # grab the member we just added
 
 # at this point: library.books has 20 Book objects,
 # library.members has 5 Member objects,
