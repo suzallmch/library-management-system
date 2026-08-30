@@ -3,9 +3,10 @@
 # ==========================================
 
 class Book:
-    def __init__(self, title, author):
+    def __init__(self, title, author, shelf_location):
         self.title = title
         self.author = author
+        self.shelf_location = shelf_location
         self.is_available = True
 
 
@@ -21,8 +22,8 @@ class Library:
         self.members = []
 
     # add a new book to the library
-    def add_book(self, title, author):
-        new_book = Book(title, author)
+    def add_book(self, title, author, shelf_location):
+        new_book = Book(title, author, shelf_location)
         self.books.append(new_book)
 
     # add a new member to the library
@@ -55,7 +56,7 @@ class Library:
         for book in self.books:
             if book.title == title:
                 if book.is_available:
-                    print(f"Book '{title}' is available in the library.")
+                    print(f"Book '{title}' is available in the '{book.shelf_location}' in the library.")
                 else:
                     print(f"Book '{title}' is not available in the library.")
                 return
@@ -65,28 +66,27 @@ class Library:
 # ==========================================
 # DATA (raw values used to create objects)
 # ==========================================
-
 book_data = [
-    ("Dune", "Frank Herbert"),
-    ("1984", "George Orwell"),
-    ("Brave New World", "Aldous Huxley"),
-    ("The Hobbit", "J.R.R. Tolkien"),
-    ("Fahrenheit 451", "Ray Bradbury"),
-    ("The Great Gatsby", "F. Scott Fitzgerald"),
-    ("Animal Farm", "George Orwell"),
-    ("Moby Dick", "Herman Melville"),
-    ("War and Peace", "Leo Tolstoy"),
-    ("Crime and Punishment", "Fyodor Dostoevsky"),
-    ("The Catcher in the Rye", "J.D. Salinger"),
-    ("To Kill a Mockingbird", "Harper Lee"),
-    ("Pride and Prejudice", "Jane Austen"),
-    ("The Odyssey", "Homer"),
-    ("Frankenstein", "Mary Shelley"),
-    ("Dracula", "Bram Stoker"),
-    ("The Picture of Dorian Gray", "Oscar Wilde"),
-    ("Slaughterhouse-Five", "Kurt Vonnegut"),
-    ("The Alchemist", "Paulo Coelho"),
-    ("Neuromancer", "William Gibson"),
+    ("Dune", "Frank Herbert", "Sci-Fi A1"),
+    ("1984", "George Orwell", "Dystopian B2"),
+    ("Brave New World", "Aldous Huxley", "Dystopian B3"),
+    ("The Hobbit", "J.R.R. Tolkien", "Fantasy C1"),
+    ("Fahrenheit 451", "Ray Bradbury", "Dystopian B4"),
+    ("The Great Gatsby", "F. Scott Fitzgerald", "Classics D1"),
+    ("Animal Farm", "George Orwell", "Dystopian B5"),
+    ("Moby Dick", "Herman Melville", "Classics D2"),
+    ("War and Peace", "Leo Tolstoy", "Classics D3"),
+    ("Crime and Punishment", "Fyodor Dostoevsky", "Classics D4"),
+    ("The Catcher in the Rye", "J.D. Salinger", "Classics D5"),
+    ("To Kill a Mockingbird", "Harper Lee", "Classics D6"),
+    ("Pride and Prejudice", "Jane Austen", "Classics D7"),
+    ("The Odyssey", "Homer", "Classics D8"),
+    ("Frankenstein", "Mary Shelley", "Horror E1"),
+    ("Dracula", "Bram Stoker", "Horror E2"),
+    ("The Picture of Dorian Gray", "Oscar Wilde", "Classics D9"),
+    ("Slaughterhouse-Five", "Kurt Vonnegut", "Sci-Fi A2"),
+    ("The Alchemist", "Paulo Coelho", "Fiction F1"),
+    ("Neuromancer", "William Gibson", "Sci-Fi A3"),
 ]
 
 member_names = ["Alice", "Bob", "Charlie", "Diana", "Ethan"]
@@ -101,8 +101,8 @@ library = Library()  # creates a Library object, which will hold all the books a
 
 # add_book takes (title, author) directly and builds the Book internally,
 # so we just pass the raw values through — no need to build Book ourselves
-for title, author in book_data:
-    library.add_book(title, author)
+for title, author, shelf_location in book_data:
+    library.add_book(title, author, shelf_location)
 
 # register_member takes a name directly and builds the Member internally,
 # and we keep a reference in a dict so we can look members up by name later
