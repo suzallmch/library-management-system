@@ -1,4 +1,12 @@
 # ==========================================
+# IMPORTS
+# ==========================================
+from datetime import date, timedelta
+# 'date' lets us get today's date
+# 'timedelta' lets us add/subtract days from a date
+
+
+# ==========================================
 # CLASS DEFINITIONS (the blueprints)
 # ==========================================
 
@@ -8,6 +16,7 @@ class Book:
         self.author = author
         self.shelf_location = shelf_location
         self.is_available = True
+        self.due_date = None   # no due date until the book is actually borrowed
 
 
 class Member:
@@ -36,7 +45,9 @@ class Library:
         for book in self.books:
             if book.title == title and book.is_available:
                 book.is_available = False
+                book.due_date = date.today() + timedelta(days=14)  # due 14 days from today
                 member.borrowed_books.append(book)
+                print(f"{member.name} borrowed '{title}', due back on {book.due_date}.")
                 return True
         print(f"Book '{title}' is not available for borrowing.")
         return False
@@ -45,7 +56,15 @@ class Library:
     def return_book(self, member, title):
         for book in member.borrowed_books:
             if book.title == title:
+                # check if it's overdue BEFORE we clear the due_date
+                if date.today() > book.due_date:
+                    days_late = (date.today() - book.due_date).days
+                    print(f"'{title}' was returned {days_late} day(s) late.")
+                else:
+                    print(f"'{title}' was returned on time.")
+
                 book.is_available = True
+                book.due_date = None   # clear the due date, it's back on the shelf
                 member.borrowed_books.remove(book)
                 return True
         print(f"Book '{title}' was not borrowed by {member.name}.")
@@ -58,7 +77,7 @@ class Library:
                 if book.is_available:
                     print(f"Book '{title}' is available in the '{book.shelf_location}' in the library.")
                 else:
-                    print(f"Book '{title}' is not available in the library.")
+                    print(f"Book '{title}' is not available in the library. Due back {book.due_date}.")
                 return
         print(f"Book '{title}' is not found in the library.")
 
@@ -97,20 +116,13 @@ member_names = ["Alice", "Bob", "Charlie", "Diana", "Ethan"]
 # objects from the blueprints + data above)
 # ==========================================
 
-library = Library()  # creates a Library object, which will hold all the books and members
+library = Library()
 
-# add_book takes (title, author) directly and builds the Book internally,
-# so we just pass the raw values through — no need to build Book ourselves
 for title, author, shelf_location in book_data:
     library.add_book(title, author, shelf_location)
 
-# register_member takes a name directly and builds the Member internally,
-# and we keep a reference in a dict so we can look members up by name later
 members = {}
 for name in member_names:
     library.register_member(name)
-    members[name] = library.members[-1]  # grab the member we just added
+    members[name] = library.members[-1]
 
-# at this point: library.books has 20 Book objects,
-# library.members has 5 Member objects,
-# and members["Alice"], members["Bob"], etc. let you grab a specific one.
