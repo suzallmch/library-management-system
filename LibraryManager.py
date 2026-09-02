@@ -25,6 +25,23 @@ class Member:
         self.borrowed_books = []
 
 
+class Student(Member):
+    def __init__(self, name):
+        super().__init__(name)
+        self.borrow_limit = 3  # students can borrow up to 3 books
+
+
+class Faculty(Member):
+    def __init__(self, name):
+        super().__init__(name)
+        self.borrow_limit = 10  # faculty can borrow up to 10 books
+
+
+class Guest(Member):
+    def __init__(self, name):
+        super().__init__(name)
+        self.borrow_limit = 1  # guests can borrow only 1 book
+
 class Library:
     def __init__(self):
         self.books = []
