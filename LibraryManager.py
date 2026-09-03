@@ -53,12 +53,25 @@ class Library:
         self.books.append(new_book)
 
     # add a new member to the library
-    def register_member(self, name):
-        new_member = Member(name)
+    def register_member(self, name, member_type):
+        if member_type == "student":
+            new_member = Student(name)
+        elif member_type == "faculty":
+            new_member = Faculty(name)
+        elif member_type == "guest":
+            new_member = Guest(name)
+        else:
+            print("Invalid member type.")
+            return
+
         self.members.append(new_member)
 
     # borrow a book from the library
     def borrow_book(self, member, title):
+        if len(member.borrowed_books) >= member.borrow_limit:
+          print(f"{member.name} has reached their borrow limit.")
+          return False
+    
         for book in self.books:
             if book.title == title and book.is_available:
                 book.is_available = False
@@ -125,7 +138,13 @@ book_data = [
     ("Neuromancer", "William Gibson", "Sci-Fi A3"),
 ]
 
-member_names = ["Alice", "Bob", "Charlie", "Diana", "Ethan"]
+member_data = [
+    ("Alice", "student"),
+    ("Bob", "faculty"),
+    ("Charlie", "guest"),
+    ("Diana", "student"),
+    ("Ethan", "faculty"),
+]
 
 
 # ==========================================
@@ -139,7 +158,7 @@ for title, author, shelf_location in book_data:
     library.add_book(title, author, shelf_location)
 
 members = {}
-for name in member_names:
-    library.register_member(name)
+for name, member_type in member_data:
+    library.register_member(name, member_type)
     members[name] = library.members[-1]
 
