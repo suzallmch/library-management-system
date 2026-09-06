@@ -3,60 +3,66 @@
 # ==========================================
 from datetime import date, timedelta
 import itertools
-book_id_counter = itertools.count(1)  # starts at 1, increases forever
-# 'date' lets us get today's date
-# 'timedelta' lets us add/subtract days from a date
+
+
+# Generates 1, 2, 3, ... whenever a new Book is created.
+# Each physical copy receives its own unique ID.
+book_id_counter = itertools.count(1)
 
 
 # ==========================================
-# CLASS DEFINITIONS (the blueprints)
+# CLASS DEFINITIONS
 # ==========================================
-
 class Book:
     def __init__(self, title, author, shelf_location):
+        self.book_id = next(book_id_counter)  # Unique ID, e.g. 1, 2, 3
         self.title = title
         self.author = author
         self.shelf_location = shelf_location
-        self.is_available = True
-        self.due_date = None   # no due date until the book is actually borrowed
-        self.book_id = next(book_id_counter)  # unique ID for each book
+        self.is_available = True              # New books begin on the shelf
+        self.due_date = None                  # No due date until borrowed
 
 
 class Member:
     def __init__(self, name):
         self.name = name
-        self.borrowed_books = []
+        self.borrowed_books = []              # Stores Book objects borrowed by this member
 
 
 class Student(Member):
     def __init__(self, name):
         super().__init__(name)
-        self.borrow_limit = 3  # students can borrow up to 3 books
+        self.borrow_limit = 3                 # Students can borrow up to 3 books
 
 
 class Faculty(Member):
     def __init__(self, name):
         super().__init__(name)
-        self.borrow_limit = 10  # faculty can borrow up to 10 books
+        self.borrow_limit = 10                # Faculty can borrow up to 10 books
 
 
 class Guest(Member):
     def __init__(self, name):
         super().__init__(name)
-        self.borrow_limit = 1  # guests can borrow only 1 book
+        self.borrow_limit = 1                 # Guests can borrow only 1 book
+
 
 class Library:
     def __init__(self):
         self.books = []
         self.members = []
 
-    # add a new book to the library
+    # Add a new physical book copy to the library.
     def add_book(self, title, author, shelf_location):
         new_book = Book(title, author, shelf_location)
         self.books.append(new_book)
+        print(f"Added '{title}' with book ID {new_book.book_id}.")
+        return new_book                   # Returning it can be useful later in the program
 
-    # add a new member to the library
+    # Register a member and assign the correct borrowing limit.
     def register_member(self, name, member_type):
+        member_type = member_type.lower()  # Allows values such as "Student" or "STUDENT"
+
         if member_type == "student":
             new_member = Student(name)
         elif member_type == "faculty":
@@ -64,32 +70,55 @@ class Library:
         elif member_type == "guest":
             new_member = Guest(name)
         else:
-            print("Invalid member type.")
-            return
+            print("Invalid member type. Choose student, faculty, or guest.")
+            return None
 
         self.members.append(new_member)
+        print(f"Registered {name} as a {member_type}.")
+        return new_member
 
-    # borrow a book from the library
+    # Display every book and its ID so the user knows which ID to borrow.
+    def list_books(self):
+        if not self.books:
+            print("There are no books in the library.")
+            return
+
+        print("\n--- Library Books ---")
+        for book in self.books:
+            status = "Available" if book.is_available else f"Borrowed (due {book.due_date})"
+            print(
+                f"ID: {book.book_id} | Title: {book.title} | "
+                f"Author: {book.author} | Shelf: {book.shelf_location} | Status: {status}"
+            )
+
+    # Borrow a book by its ID instead of its title.
+    # IDs allow the library to distinguish between multiple copies of one title.
     def borrow_book(self, member, book_id):
         if len(member.borrowed_books) >= member.borrow_limit:
-          print(f"{member.name} has reached their borrow limit.")
-          return False
-    
+            print(f"{member.name} has reached their borrow limit of {member.borrow_limit}.")
+            return False
+
         for book in self.books:
-            if book.book_id == book_id and book.is_available:
+            if book.book_id == book_id:
+                if not book.is_available:
+                    print(f"Book ID {book_id} ('{book.title}') is already borrowed.")
+                    return False
+
                 book.is_available = False
-                book.due_date = date.today() + timedelta(days=14)  # due 14 days from today
+                book.due_date = date.today() + timedelta(days=14)  # Loans last 14 days
                 member.borrowed_books.append(book)
                 print(f"{member.name} borrowed '{book.title}', due back on {book.due_date}.")
                 return True
-        print(f"Book  with ID '{book_id}' is not available for borrowing.")
+
+        # This runs only if no matching ID was found in self.books.
+        print(f"Book with ID {book_id} was not found.")
         return False
 
-    # a member returns a book to the library
+    # Return a book by its ID.
     def return_book(self, member, book_id):
         for book in member.borrowed_books:
             if book.book_id == book_id:
-                # check if it's overdue BEFORE we clear the due_date
+                # Check lateness before resetting due_date to None.
                 if date.today() > book.due_date:
                     days_late = (date.today() - book.due_date).days
                     print(f"'{book.title}' was returned {days_late} day(s) late.")
@@ -97,26 +126,35 @@ class Library:
                     print(f"'{book.title}' was returned on time.")
 
                 book.is_available = True
-                book.due_date = None   # clear the due date, it's back on the shelf
+                book.due_date = None            # The returned copy no longer has a due date
                 member.borrowed_books.remove(book)
                 return True
-        print(f"Book with ID '{book_id}' was not borrowed by {member.name}.")
+
+        print(f"Book with ID {book_id} was not borrowed by {member.name}.")
         return False
 
-    # check if a book is available in the library
+    # Search for one book copy by its unique ID.
     def search_book(self, book_id):
         for book in self.books:
             if book.book_id == book_id:
                 if book.is_available:
-                    print(f"Book '{book.title}' is available in the '{book.shelf_location}' in the library.")
+                    print(
+                        f"Book ID {book.book_id}: '{book.title}' is available "
+                        f"at shelf '{book.shelf_location}'."
+                    )
                 else:
-                    print(f"Book '{book.title}' is not available in the library. Due back {book.due_date}.")
-                return
-        print(f"Book with ID '{book_id}' is not found in the library.")
+                    print(
+                        f"Book ID {book.book_id}: '{book.title}' is currently borrowed "
+                        f"and due back on {book.due_date}."
+                    )
+                return book
+
+        print(f"Book with ID {book_id} was not found.")
+        return None
 
 
 # ==========================================
-# DATA (raw values used to create objects)
+# DATA
 # ==========================================
 book_data = [
     ("Dune", "Frank Herbert", "Sci-Fi A1"),
@@ -151,10 +189,8 @@ member_data = [
 
 
 # ==========================================
-# SETUP PHASE (build the world — create real
-# objects from the blueprints + data above)
+# SETUP AND EXAMPLE USE
 # ==========================================
-
 library = Library()
 
 for title, author, shelf_location in book_data:
@@ -162,6 +198,9 @@ for title, author, shelf_location in book_data:
 
 members = {}
 for name, member_type in member_data:
-    library.register_member(name, member_type)
-    members[name] = library.members[-1]
+    member = library.register_member(name, member_type)
+    if member is not None:
+        members[name] = member
+
+
 
