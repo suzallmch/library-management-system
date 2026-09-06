@@ -2,6 +2,8 @@
 # IMPORTS
 # ==========================================
 from datetime import date, timedelta
+import itertools
+book_id_counter = itertools.count(1)  # starts at 1, increases forever
 # 'date' lets us get today's date
 # 'timedelta' lets us add/subtract days from a date
 
@@ -17,6 +19,7 @@ class Book:
         self.shelf_location = shelf_location
         self.is_available = True
         self.due_date = None   # no due date until the book is actually borrowed
+        self.book_id = next(book_id_counter)  # unique ID for each book
 
 
 class Member:
@@ -67,49 +70,49 @@ class Library:
         self.members.append(new_member)
 
     # borrow a book from the library
-    def borrow_book(self, member, title):
+    def borrow_book(self, member, book_id):
         if len(member.borrowed_books) >= member.borrow_limit:
           print(f"{member.name} has reached their borrow limit.")
           return False
     
         for book in self.books:
-            if book.title == title and book.is_available:
+            if book.book_id == book_id and book.is_available:
                 book.is_available = False
                 book.due_date = date.today() + timedelta(days=14)  # due 14 days from today
                 member.borrowed_books.append(book)
-                print(f"{member.name} borrowed '{title}', due back on {book.due_date}.")
+                print(f"{member.name} borrowed '{book.title}', due back on {book.due_date}.")
                 return True
-        print(f"Book '{title}' is not available for borrowing.")
+        print(f"Book  with ID '{book_id}' is not available for borrowing.")
         return False
 
     # a member returns a book to the library
-    def return_book(self, member, title):
+    def return_book(self, member, book_id):
         for book in member.borrowed_books:
-            if book.title == title:
+            if book.book_id == book_id:
                 # check if it's overdue BEFORE we clear the due_date
                 if date.today() > book.due_date:
                     days_late = (date.today() - book.due_date).days
-                    print(f"'{title}' was returned {days_late} day(s) late.")
+                    print(f"'{book.title}' was returned {days_late} day(s) late.")
                 else:
-                    print(f"'{title}' was returned on time.")
+                    print(f"'{book.title}' was returned on time.")
 
                 book.is_available = True
                 book.due_date = None   # clear the due date, it's back on the shelf
                 member.borrowed_books.remove(book)
                 return True
-        print(f"Book '{title}' was not borrowed by {member.name}.")
+        print(f"Book with ID '{book_id}' was not borrowed by {member.name}.")
         return False
 
     # check if a book is available in the library
-    def search_book(self, title):
+    def search_book(self, book_id):
         for book in self.books:
-            if book.title == title:
+            if book.book_id == book_id:
                 if book.is_available:
-                    print(f"Book '{title}' is available in the '{book.shelf_location}' in the library.")
+                    print(f"Book '{book.title}' is available in the '{book.shelf_location}' in the library.")
                 else:
-                    print(f"Book '{title}' is not available in the library. Due back {book.due_date}.")
+                    print(f"Book '{book.title}' is not available in the library. Due back {book.due_date}.")
                 return
-        print(f"Book '{title}' is not found in the library.")
+        print(f"Book with ID '{book_id}' is not found in the library.")
 
 
 # ==========================================
