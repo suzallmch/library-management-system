@@ -27,6 +27,7 @@ class Member:
     def __init__(self, name):
         self.name = name
         self.borrowed_books = []
+        self.total_days_late = 0  # running total of days late across all returns
 
     def can_borrow_more(self):
         return len(self.borrowed_books) < self.borrow_limit
@@ -124,8 +125,10 @@ class Library:
     def return_book(self, member, book_id):
         for book in member.borrowed_books:
             if book.book_id == book_id:
-                if date.today() > book.due_date:
-                    days_late = (date.today() - book.due_date).days
+                days_late = max((date.today() - book.due_date).days, 0)
+
+                if days_late > 0:
+                    member.total_days_late += days_late
                     print(f"'{book.title}' was returned {days_late} day(s) late.")
                 else:
                     print(f"'{book.title}' was returned on time.")
@@ -209,7 +212,3 @@ for name, member_type in member_data:
     if member is not None:
         members[name] = member
 
-
-library.check_availability("1984")
-library.borrow_book(members["Alice"], 3)
-library.check_availability("1984")
