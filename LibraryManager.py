@@ -5,6 +5,7 @@ from datetime import date, timedelta
 import itertools
 
 LOAN_PERIOD_DAYS = 14
+FINE_RATE = 0.25  # currency units per day late
 
 # Generates 1, 2, 3, ... whenever a new Book is created.
 book_id_counter = itertools.count(1)
@@ -27,10 +28,20 @@ class Member:
     def __init__(self, name):
         self.name = name
         self.borrowed_books = []
-        self.total_days_late = 0  # running total of days late across all returns
+        self.total_days_late = 0       # running total of days late across all returns
+        self.total_fines_owed = 0.0    # running unpaid fine balance
 
     def can_borrow_more(self):
+        if self.total_fines_owed > 0:
+            return False
         return len(self.borrowed_books) < self.borrow_limit
+
+    def pay_fine(self, amount):
+        if amount <= 0:
+            print("Payment amount must be positive.")
+            return
+        self.total_fines_owed = max(0.0, self.total_fines_owed - amount)
+        print(f"{self.name} paid {amount:.2f}. Remaining balance: {self.total_fines_owed:.2f}.")
 
 
 class Student(Member):
@@ -104,7 +115,10 @@ class Library:
 
     def borrow_book(self, member, book_id):
         if not member.can_borrow_more():
-            print(f"{member.name} has reached their borrow limit of {member.borrow_limit}.")
+            if member.total_fines_owed > 0:
+                print(f"{member.name} owes {member.total_fines_owed:.2f} in fines and cannot borrow until paid.")
+            else:
+                print(f"{member.name} has reached their borrow limit of {member.borrow_limit}.")
             return False
 
         for book in self.books:
@@ -129,7 +143,9 @@ class Library:
 
                 if days_late > 0:
                     member.total_days_late += days_late
-                    print(f"'{book.title}' was returned {days_late} day(s) late.")
+                    fine = days_late * FINE_RATE
+                    member.total_fines_owed += fine
+                    print(f"'{book.title}' was returned {days_late} day(s) late. Fine added: {fine:.2f}.")
                 else:
                     print(f"'{book.title}' was returned on time.")
 
@@ -211,4 +227,3 @@ for name, member_type in member_data:
     member = library.register_member(name, member_type)
     if member is not None:
         members[name] = member
-
