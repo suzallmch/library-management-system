@@ -22,6 +22,7 @@ class Book:
         self.shelf_location = shelf_location
         self.is_available = True
         self.due_date = None
+        self.reservation_queue = []  # list of Member objects waiting, in order
 
 
 class Member:
@@ -127,6 +128,18 @@ class Library:
                     print(f"Book ID {book_id} ('{book.title}') is already borrowed.")
                     return False
 
+                # If there's a reservation queue, only the front person can borrow it now
+                if book.reservation_queue and book.reservation_queue[0] is not member:
+                    print(
+                        f"'{book.title}' is reserved for {book.reservation_queue[0].name}. "
+                        f"{member.name} cannot borrow it out of turn."
+                    )
+                    return False
+
+                # If this member was at the front of the queue, pop them off it
+                if book.reservation_queue and book.reservation_queue[0] is member:
+                    book.reservation_queue.pop(0)
+
                 book.is_available = False
                 book.due_date = date.today() + timedelta(days=LOAN_PERIOD_DAYS)
                 member.borrowed_books.append(book)
@@ -152,9 +165,48 @@ class Library:
                 book.is_available = True
                 book.due_date = None
                 member.borrowed_books.remove(book)
+
+                # Notify next person in the reservation queue, if any
+                if book.reservation_queue:
+                    next_member = book.reservation_queue[0]
+                    print(f"Notice: '{book.title}' is now reserved and ready for {next_member.name} to pick up.")
+
                 return True
 
         print(f"Book with ID {book_id} was not borrowed by {member.name}.")
+        return False
+
+    def reserve_book(self, member, book_id):
+        for book in self.books:
+            if book.book_id == book_id:
+                if book.is_available:
+                    print(f"'{book.title}' is available right now — just borrow it instead of reserving.")
+                    return False
+
+                if member in book.reservation_queue:
+                    print(f"{member.name} is already on the waitlist for '{book.title}'.")
+                    return False
+
+                book.reservation_queue.append(member)
+                position = len(book.reservation_queue)
+                print(f"{member.name} reserved '{book.title}' — position {position} in line.")
+                return True
+
+        print(f"Book with ID {book_id} was not found.")
+        return False
+
+    def cancel_reservation(self, member, book_id):
+        for book in self.books:
+            if book.book_id == book_id:
+                if member not in book.reservation_queue:
+                    print(f"{member.name} has no reservation on '{book.title}'.")
+                    return False
+
+                book.reservation_queue.remove(member)
+                print(f"{member.name}'s reservation on '{book.title}' was cancelled.")
+                return True
+
+        print(f"Book with ID {book_id} was not found.")
         return False
 
     def search_book(self, book_id):
